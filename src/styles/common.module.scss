@@ -1,0 +1,22 @@
+.container {
+  width: 100%;
+  max-width: 72rem;
+  padding: 0 2rem;
+  margin: 0 auto;
+}
+
+.containerIcons {
+  display: flex;
+  gap: 2rem;
+
+  span {
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    color: var(--info);
+  }
+
+  svg {
+    margin-right: .5rem;
+  }
+}

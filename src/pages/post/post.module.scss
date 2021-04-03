@@ -1,0 +1,39 @@
+.banner {
+  display: block;
+  width: 100%;
+  margin-bottom: 8rem;
+}
+
+.descriptions {
+  h1 {
+    font-size: 4.8rem;
+    color: var(--title);
+    padding-bottom: 2.5rem;
+  }
+}
+
+.content {
+  padding-top: 6rem;
+  &:last-child {
+    padding-bottom: 6rem;
+  }
+
+
+  strong {
+    font-size: 2.8rem;
+    line-height: 3.4rem;
+    color: var(--title);
+  }
+
+  p {
+    font-size: 1.8rem;
+    line-height: 2.6rem;
+    padding: .8rem 0 2.5rem;
+
+  }
+
+  ul, ol {
+    list-style: none;
+    margin-left: 2rem;
+  }
+}
