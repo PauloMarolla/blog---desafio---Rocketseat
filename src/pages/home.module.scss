@@ -4,6 +4,7 @@
   flex-direction: column;
   margin-bottom: 5rem;
   cursor: pointer;
+  text-decoration: none;
 
   &:hover {
     strong {
@@ -15,22 +16,22 @@
     font-size: 2.8rem;
     line-height: 3.4rem;
     color: var(--title);
-    transition: .2s ease-in-out;
+    transition: 0.2s ease-in-out;
   }
 
   p {
+    color: var(--text);
     font-size: 1.8rem;
     line-height: 2.2rem;
-    padding: .8rem 0 2.5rem;
+    padding: 0.8rem 0 2.5rem;
   }
-
 }
 
 .button {
   color: var(--primary);
   background: transparent;
   border: 0;
-  transition: .2s ease-in-out;
+  transition: 0.2s ease-in-out;
   font-weight: 600;
   font-size: 1.8rem;
 

@@ -1,10 +1,18 @@
-import Link from 'next/link';
-import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { GetStaticPaths, GetStaticProps } from 'next';
+import { RichText } from 'prismic-dom';
+import Head from 'next/head';
+import Prismic from '@prismicio/client';
+import { useRouter } from 'next/router';
+
+import { FiUser, FiCalendar, FiClock } from 'react-icons/fi';
 
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
+import Header from '../../components/Header';
 
 interface Post {
   first_publication_date: string | null;
@@ -23,92 +31,139 @@ interface Post {
   };
 }
 
-// interface PostProps {
-//   post: Post;
-// }
+interface PostProps {
+  post: Post;
+}
 
-export default function Post(): JSX.Element {
+export default function Post({ post }: PostProps): JSX.Element {
+  const router = useRouter();
+
+  const formattedContent = post.data.content.map(contentItem => {
+    return {
+      heading: contentItem.heading,
+      body: contentItem.body.map(text => ({ text })),
+    };
+  });
+
+  if (router.isFallback) {
+    return <h1>Carregando...</h1>;
+  }
+
   return (
     <>
-      <img src="/images/Logo.svg" className={styles.banner} alt="banner" />
+      <Header />
+      <Head>
+        <title>{post.data.title} | spacetraveling</title>
+      </Head>
+      <img src={post.data.banner.url} className={styles.banner} alt="banner" />
 
       <main className={commonStyles.container}>
         <div className={styles.descriptions}>
-          <h1>Criando um app CRA do zero</h1>
+          <h1>{post.data.title}</h1>
           <div className={commonStyles.containerIcons}>
             <span>
               <FiCalendar />
-              15 de março de 2021
+              {format(new Date(post.first_publication_date), 'dd MMM yyyy', {
+                locale: ptBR,
+              })}
             </span>
             <span>
               <FiUser />
-              Paulo Marolla
+              {post.data.author}
             </span>
             <span>
-              <FiClock />4 min
+              <FiClock />
+              {formattedContent.reduce((acc, item) => {
+                const headingWords = item.heading?.split(' ');
+                const bodyWords = item.body.reduce((bodyAcc, bodyItem) => {
+                  const formattedText = bodyItem.text.text.split(' ');
+                  const arrayOfWords = formattedText;
+                  return [...bodyAcc, ...arrayOfWords];
+                }, []);
+
+                const allWords = [...headingWords, ...bodyWords];
+                const calc = Math.ceil(allWords.length / 200);
+                return acc + calc;
+              }, 0)}{' '}
+              min
             </span>
           </div>
         </div>
 
-        <article className={styles.content}>
-          <strong>Proint et varius</strong>
-          <p>
-            Proin et varius Lorem ipsum dolor sit amet, consectetur adipiscing
-            elit. Nullam dolor sapien, vulputate eu diam at, condimentum
-            hendrerit tellus. Nam facilisis sodales felis, pharetra pharetra
-            lectus auctor sed. Ut venenatis mauris vel libero pretium, et
-            pretium ligula faucibus. Morbi nibh felis, elementum a posuere et,
-            vulputate et erat. Nam venenatis. Cras laoreet mi Nulla auctor sit
-            amet quam vitae commodo. Sed risus justo, vulputate quis neque eget,
-            dictum sodales sem. In eget felis finibus, mattis magna a, efficitur
-            ex. Curabitur vitae justo consequat sapien gravida auctor a non
-            risus. Sed malesuada mauris nec orci congue, interdum efficitur
-          </p>
-          <p>
-            vulputate quis neque eget, dictum sodales sem. In eget felis
-            finibus, mattis magna a, efficitur ex. Curabitur vitae justo
-            consequat sapien gravida auctor a non risus. Sed malesuada mauris
-            nec orc
-          </p>
-        </article>
+        {formattedContent.map(item => {
+          const itemsFromBody = item.body
+            .reduce(
+              (acc, bodyItem) => {
+                const html = RichText.asHtml([bodyItem.text]);
+                return [...acc, html];
+              },
+              [`<strong>${item.heading}</strong>`]
+            )
+            .join('');
 
-        <article className={styles.content}>
-          <strong>Proint et varius</strong>
-          <p>
-            <Link href="/">Proin et varius Lorem ipsum</Link> dolor sit amet,
-            consectetur adipiscing elit. Nullam dolor sapien, vulputate eu diam
-            at, condimentum hendrerit tellus. Nam facilisis sodales felis,
-            pharetra pharetra lectus auctor sed. Ut venenatis mauris vel libero
-            pretium, et pretium ligula faucibus. Morbi nibh felis, elementum a
-            posuere et, vulputate et erat. Nam venenatis. Cras laoreet mi Nulla
-            auctor sit amet quam vitae commodo. Sed risus justo, vulputate quis
-            neque eget, dictum sodales sem. In eget felis finibus, mattis magna
-            a, efficitur ex. Curabitur vitae justo consequat sapien gravida
-            auctor a non risus. Sed malesuada mauris nec orci congue, interdum
-            efficitur
-          </p>
-          <p>
-            vulputate quis neque eget, dictum sodales sem. In eget felis
-            finibus, mattis magna a, efficitur ex. Curabitur vitae justo
-            consequat sapien gravida auctor a non risus. Sed malesuada mauris
-            nec orc
-          </p>
-        </article>
+          return (
+            <article
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: `${itemsFromBody}`,
+              }}
+              key={Math.random()}
+              className={styles.content}
+            />
+          );
+        })}
       </main>
     </>
   );
 }
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient();
-//   const posts = await prismic.query('S');
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient();
+  const posts = await prismic.query(
+    [Prismic.predicates.at('document.type', 'post')],
+    {
+      fetch: ['post.title'],
+      pageSize: 2,
+    }
+  );
 
-//   // TODO
-// };
+  const paths = posts.results.map(post => {
+    return {
+      params: {
+        slug: post.uid,
+      },
+    };
+  });
 
-// export const getStaticProps = async context => {
-//   const prismic = getPrismicClient();
-//   const response = await prismic.getByUID(TODO);
+  return {
+    paths,
+    fallback: true,
+  };
+};
 
-//   // TODO
-// };
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const { slug } = params;
+
+  const prismic = getPrismicClient();
+  const response = await prismic.getByUID('post', String(slug), {});
+
+  const post = {
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
+    data: {
+      title: response.data.title,
+      subtitle: response.data.subtitle,
+      banner: {
+        url: response.data.banner.url,
+      },
+      author: response.data.author,
+      content: response.data.content,
+    },
+  };
+
+  return {
+    props: {
+      post,
+    },
+  };
+};

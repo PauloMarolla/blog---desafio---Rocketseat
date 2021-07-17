@@ -9,6 +9,8 @@
   display: flex;
   gap: 2rem;
 
+  time,
+  address,
   span {
     font-size: 1.4rem;
     display: flex;
@@ -17,6 +19,6 @@
   }
 
   svg {
-    margin-right: .5rem;
+    margin-right: 0.5rem;
   }
 }
